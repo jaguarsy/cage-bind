@@ -1,0 +1,29 @@
+{
+  "camelcase": true,
+  "curly": true,
+  "eqeqeq": false,
+  "newcap": true,
+  "undef": false,
+  "unused": false,
+  "eqnull": true,
+  "indent": 4,
+  "quotmark": "single",
+  "esnext": true,
+  "immed": true,
+  "noarg": true,
+  "evil": true,
+  "trailing": true,
+  "strict": true,
+  "globals": {
+    "$": true,
+    "jQuery": true,
+    "iScroll": true,
+    "AMap": true,
+    "_hmt": true,
+    "wx": true,
+    "Base64": true
+  },
+  "devel": true,
+  "node": true,
+  "browser": true
+}
