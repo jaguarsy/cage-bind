@@ -443,13 +443,13 @@
             };
 
             CageBind.prototype.addClass = function (classes) {
-                var className = "";
-                if (typeof classes !== "string") {
+                var className = '';
+                if (typeof classes !== 'string') {
                     for (var i = 0; i < classes.length; i++) {
-                        className += " " + classes[i];
+                        className += ' ' + classes[i];
                     }
                 } else {
-                    className = " " + classes;
+                    className = ' ' + classes;
                 }
                 return this.forEach(function (el) {
                     el.className += className;
@@ -458,12 +458,12 @@
 
             CageBind.prototype.removeClass = function (clazz) {
                 return this.forEach(function (el) {
-                    var cs = el.className.split(" "), i;
+                    var cs = el.className.split(' '), i;
 
                     while ((i = cs.indexOf(clazz)) > -1) {
                         cs = cs.slice(0, i).concat(cs.slice(++i));
                     }
-                    el.className = cs.join(" ");
+                    el.className = cs.join(' ');
                 });
             };
 
