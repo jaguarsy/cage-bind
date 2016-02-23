@@ -24,7 +24,7 @@
         for (var i = 0; i < list.length; i++) {
             var item = list[i];
 
-            result.push(callback.call(item, item, i) || item);
+            result.push(callback(item, i) || item);
         }
 
         return result;
@@ -41,7 +41,7 @@
 
         for (var i = 0; i < list.length; i++) {
             var item = list[i];
-            if (callback.call(item, item)) {
+            if (callback(item)) {
                 return item;
             }
         }
@@ -361,14 +361,13 @@
             }
         };
 
-        var sourceElement = element.cloneNode(true),
-            prevElement = element,
+        var prevElement = element,
             cloneElement;
 
         _map(list, function (item, index) {
             item.$index = index;
 
-            cloneElement = sourceElement.cloneNode(true);
+            cloneElement = element.cloneNode(true);
             cloneElement.isRepeat = true;
             _insertAfter(cloneElement, prevElement);
             prevElement = cloneElement;
@@ -392,8 +391,7 @@
             return item.name === 'cg-repeat';
         };
 
-        var attributes = element.attributes,
-            repeat = _find(attributes, isRepeat);
+        var repeat = _find(element.attributes, isRepeat);
 
         //has cg-repeat
         if (repeat) {
@@ -412,8 +410,8 @@
     var _bind = function (source) {
         var self = this;
 
-        self.map(function () {
-            _bindOject(this, source);
+        _map(self, function (item) {
+            _bindOject(item, source);
         });
 
         return self;
@@ -439,18 +437,40 @@
                 return _map(this, callback);
             };
 
-            CageBind.prototype.removeClass = function (className) {
-                this.map(function () {
-                    this.classList.remove(className);
-                });
+            CageBind.prototype.forEach = function (callback) {
+                this.map(callback);
                 return this;
             };
 
-            CageBind.prototype.css = function (name, value) {
-                this.map(function () {
-                    this.style[name] = value;
+            CageBind.prototype.addClass = function (classes) {
+                var className = "";
+                if (typeof classes !== "string") {
+                    for (var i = 0; i < classes.length; i++) {
+                        className += " " + classes[i];
+                    }
+                } else {
+                    className = " " + classes;
+                }
+                return this.forEach(function (el) {
+                    el.className += className;
                 });
-                return this;
+            };
+
+            CageBind.prototype.removeClass = function (clazz) {
+                return this.forEach(function (el) {
+                    var cs = el.className.split(" "), i;
+
+                    while ((i = cs.indexOf(clazz)) > -1) {
+                        cs = cs.slice(0, i).concat(cs.slice(++i));
+                    }
+                    el.className = cs.join(" ");
+                });
+            };
+
+            CageBind.prototype.css = function (name, value) {
+                return this.forEach(function (el) {
+                    el.style[name] = value;
+                });
             };
 
             CageBind.prototype.cbind = _bind;
