@@ -286,7 +286,12 @@
             return item.text;
         });
 
-        return eval(result.join(''));
+        try {
+            return eval(result.join(''));
+        } catch (e) {
+            console.warn(e);
+            return null;
+        }
     };
 
     var LEFT = '{{';
@@ -370,6 +375,14 @@
         return false;
     };
 
+    var _checkRepeatElement = function (element) {
+        var isRepeat = function (item) {
+            return item.name === 'cg-repeat';
+        };
+
+        return _find(element.attributes, isRepeat);
+    };
+
     //cg-repeat
     var _repeat = function (element, attr, context) {
         var arr = attr.split(/\s+/);
@@ -379,36 +392,47 @@
         }
 
         var name = arr[0],
-            subContext = {},
             list = _eval(arr[2], context);
 
-        var _bindNoRepeatElement = function (ele, context) {
-            if (!_replaceTextNode(ele, context)) {
-                _replaceAttributes(ele, context);
-
-                _map(ele.childNodes, function (item) {
-                    _bindNoRepeatElement(item, context);
-                });
+        var _bindInRepeat = function (ele, subContext) {
+            if (_replaceTextNode(ele, subContext)) {
+                return;
             }
+
+            _replaceAttributes(ele, subContext);
+
+            _map(ele.childNodes, function (item) {
+                if (item.isRepeat) {
+                    return;
+                }
+
+                var repeat = _checkRepeatElement(item);
+
+                if (repeat) {
+                    _repeat(item, repeat.value, subContext);
+                } else {
+                    _replaceAttributes(item, subContext);
+                    _bindInRepeat(item, subContext);
+                }
+            });
         };
 
         var prevElement = element,
             cloneElement;
 
         _map(list, function (item, index) {
-            item.$index = index;
+            var subContext = {
+                $index: index
+            };
 
             cloneElement = element.cloneNode(true);
             cloneElement.isRepeat = true;
             _insertAfter(cloneElement, prevElement);
             _insertComment(cloneElement, {isRepeat: true});
             prevElement = cloneElement;
-
             subContext[name] = item;
 
-            _bindNoRepeatElement(cloneElement, subContext);
-
-            delete item.$index;
+            _bindInRepeat(cloneElement, subContext);
         });
 
         _remove(element);
@@ -443,11 +467,7 @@
             return;
         }
 
-        var isRepeat = function (item) {
-            return item.name === 'cg-repeat';
-        };
-
-        var repeat = _find(element.attributes, isRepeat);
+        var repeat = _checkRepeatElement(element);
 
         //has cg-repeat
         if (repeat) {

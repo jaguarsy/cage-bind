@@ -11,7 +11,7 @@
         },
         name: 'cage-bind',
         list: [
-            {name: 'cg-bind'},
+            {name: 'cg-bind', sublist: ['c', 'g', '-', 'b', 'i', 'n', 'd']},
             {name: 'cg-repeat'},
             {name: 'cg-show'},
             {name: 'cg-hide'},

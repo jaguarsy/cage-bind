@@ -14,13 +14,22 @@
 <div id="test">
     Hello, my first name is {{user.firstName.toUpperCase()}}, and my last name is
     <input type="text" cg-value="user.lastName"/>
+
     <p>This is a one-way-bind library, called <span cg-bind="name.replace('-','')"></span>.</p>
+
     <p>--------------------------</p>
+
     <p>functions:</p>
 
-    <p cg-repeat="item in list">
-        {{item.$index}}: <span cg-bind="item.name"></span>
-    </p>
+    <div cg-repeat="item in list">
+        {{$index}}: <span cg-bind="item.name"></span>
+
+        <p>
+            <strong cg-repeat="subitem in item.sublist"
+                    cg-bind="subitem.toUpperCase()"
+                    style="margin-right:5px;"></strong>
+        </p>
+    </div>
     <p>--------------------------</p>
 
     <p>test cg-show: <span cg-show="testShowHide">show by cg-show</span></p>
