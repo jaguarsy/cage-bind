@@ -71,8 +71,23 @@
         referenceNode.parentNode.insertBefore(newNode, referenceNode.nextSibling);
     };
 
-    ///////////////////////////////////
-    //Lexer, copy from angular.js - parse.js
+    var _insertBefore = function (newNode, referenceNode) {
+        referenceNode.parentNode.insertBefore(newNode, referenceNode);
+    };
+
+    var _remove = function (node) {
+        node.parentNode.removeChild(node);
+    };
+
+    //text must be only one element
+    var _createElementByText = function (text) {
+        var tmp = document.createElement('div');
+        tmp.innerHTML = text;
+        return tmp.childNodes[0];
+    };
+
+    ///////////////////////////////////////////
+    //region //Lexer, copy from angular.js - parse.js//
 
     var OPERATORS = _createMap();
 
@@ -253,7 +268,8 @@
         }
     };
 
-    ///////////////////////////////////
+    //endregion/
+    ///////////////////////////////////////////
 
     var _lexer = new Lexer();
 
@@ -302,6 +318,18 @@
         textNode.textContent = text;
     };
 
+    var _insertComment = function (target, attr) {
+        var comment = document.createComment(target.outerHTML);
+        if (attr) {
+            for (var key in attr) {
+                if (attr.hasOwnProperty(key)) {
+                    comment[key] = attr[key];
+                }
+            }
+        }
+        _insertBefore(comment, target);
+    };
+
     //no cg-repeat
     var _services = {
         'cg-bind': function (attr, context) {
@@ -316,6 +344,9 @@
             if (_eval(attr, context)) {
                 this.style.display = 'none';
             }
+        },
+        'cg-value': function (attr, context) {
+            this.value = _eval(attr, context);
         }
     };
 
@@ -370,6 +401,7 @@
             cloneElement = element.cloneNode(true);
             cloneElement.isRepeat = true;
             _insertAfter(cloneElement, prevElement);
+            _insertComment(cloneElement, {isRepeat: true});
             prevElement = cloneElement;
 
             subContext[name] = item;
@@ -379,7 +411,31 @@
             delete item.$index;
         });
 
-        element.parentNode.removeChild(element);
+        _remove(element);
+    };
+
+    var _resetRepeat = function (comment) {
+        if (comment.constructor !== Comment || !comment.isRepeat) {
+            _map(comment.childNodes, function (item) {
+                _resetRepeat(item);
+            });
+            return;
+        }
+
+        var newRepeatElement = _createElementByText(comment.textContent);
+        _remove(comment.nextSibling);
+        _insertAfter(newRepeatElement, comment);
+        _remove(comment);
+
+        var next = newRepeatElement.nextSibling;
+
+        while (next && next.constructor === Comment && next.isRepeat) {
+            _remove(next.nextSibling); //remove node after this comment
+            var tmp = next; //save this comment
+            next = next.nextSibling; //set next to the nextSibling
+            _remove(tmp); //remove comment
+            tmp = null;
+        }
     };
 
     var _bindOject = function (element, context) {
@@ -411,6 +467,9 @@
         var self = this;
 
         _map(self, function (item) {
+            //reset the cg-repeat node maybe bind before
+            _resetRepeat(item);
+
             _bindOject(item, source);
         });
 

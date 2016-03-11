@@ -1,6 +1,6 @@
 {
   "name": "cage-bind",
-  "version": "0.0.1",
+  "version": "0.0.2",
   "description": "A one-way-bind library by pure js.",
   "main": "index.js",
   "scripts": {
