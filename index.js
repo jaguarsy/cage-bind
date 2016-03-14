@@ -79,6 +79,10 @@
         node.parentNode.removeChild(node);
     };
 
+    var _guid = function () {
+        return Date.now();
+    };
+
     //text must be only one element
     var _createElementByText = function (text) {
         var tmp = document.createElement('div');
@@ -280,7 +284,9 @@
         var result = _map(tokens, function (item, index) {
             if (context &&
                 item.identifier &&
-                (index === 0 || tokens[index - 1].operator )) {
+                (index === 0 ||
+                tokens[index - 1].operator ||
+                tokens[index - 1].text === '[' )) {
                 return contextStr + item.text;
             }
             return item.text;
@@ -418,7 +424,8 @@
         };
 
         var prevElement = element,
-            cloneElement;
+            cloneElement,
+            guid = _guid();
 
         _map(list, function (item, index) {
             var subContext = {
@@ -427,13 +434,19 @@
 
             cloneElement = element.cloneNode(true);
             cloneElement.isRepeat = true;
+            cloneElement.guid = guid;
+            cloneElement.style.display = '';
             _insertAfter(cloneElement, prevElement);
-            _insertComment(cloneElement, {isRepeat: true});
+            _insertComment(cloneElement, {isRepeat: true, guid: guid});
             prevElement = cloneElement;
             subContext[name] = item;
 
             _bindInRepeat(cloneElement, subContext);
         });
+
+        if (!list || !list.length) {
+            _insertComment(element, {isRepeat: true, guid: guid});
+        }
 
         _remove(element);
     };
@@ -446,20 +459,33 @@
             return;
         }
 
-        var newRepeatElement = _createElementByText(comment.textContent);
-        _remove(comment.nextSibling);
-        _insertAfter(newRepeatElement, comment);
-        _remove(comment);
+        var newRepeatElement = _createElementByText(comment.textContent),
+            originGuid = comment.guid;
+
+        _insertBefore(newRepeatElement, comment);
 
         var next = newRepeatElement.nextSibling;
 
-        while (next && next.constructor === Comment && next.isRepeat) {
-            _remove(next.nextSibling); //remove node after this comment
-            var tmp = next; //save this comment
-            next = next.nextSibling; //set next to the nextSibling
-            _remove(tmp); //remove comment
-            tmp = null;
+        while (next && next.guid && next.guid === originGuid) {
+            if (next.nextSibling &&
+                next.nextSibling.guid &&
+                next.nextSibling.guid === originGuid) {
+                _remove(next.nextSibling);
+            }
+            _remove(next);
+            next = newRepeatElement.nextSibling;
         }
+
+        //while (next && next.constructor === Comment && next.isRepeat) {
+        //    if (next.nextSibling.outerHTML === next.outerHTML) {
+        //        _remove(next.nextSibling); //remove node after this comment when they are exactly the same
+        //    }
+        //
+        //    var tmp = next; //save this comment
+        //    next = next.nextSibling; //set next to the nextSibling
+        //    _remove(tmp); //remove comment
+        //    tmp = null;
+        //}
     };
 
     var _bindOject = function (element, context) {
@@ -571,7 +597,7 @@
     //show [cg-cloak] element when cage-bind loaded
     $('[cg-cloak]').removeClass('cg-cloak');
 
-    //hide [cg-show] element when cage-bind loaded
-    $('[cg-show]').css('display', 'none');
+    //hide [cg-show] and [cg-repeat] element when cage-bind loaded
+    $('[cg-show], [cg-repeat]').css('display', 'none');
 
 })(window.jQuery || window.$);
